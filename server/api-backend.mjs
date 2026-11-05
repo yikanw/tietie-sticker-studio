@@ -5,7 +5,7 @@ import { fetch, FormData } from "undici";
 import { getSettings, imageKey, OPENAI_BASE } from "./settings.mjs";
 import { dispatcherForUrl } from "./proxy.mjs";
 
-// gif: { frames, ms } 时输出 GIF（白底，GIF 不支持透明；所有帧拼成一张精灵表，长边 ≤ 3840，所以帧尺寸用 512）
+// gif: { frames, ms } 时输出透明 GIF（所有帧拼成一张精灵表，长边 ≤ 3840，所以帧尺寸用 512）
 export async function runApiImage({ prompt, refImages = [], signal, transparent = true, gif = null }) {
   const st = getSettings();
   const s = st.image;
@@ -20,6 +20,7 @@ export async function runApiImage({ prompt, refImages = [], signal, transparent 
         size: gif.size ?? "512x512",
         quality: s.quality || "medium",
         output_format: "gif",
+        background: "transparent", // GIF 原生支持透明，避免白底抠不干净（缝隙里的白沫）
         frame_count: gif.frames,
         frame_duration_ms: gif.ms,
       }

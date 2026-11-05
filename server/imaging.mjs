@@ -125,16 +125,17 @@ export function qaFromStats(stats, { usedRef }) {
 
 // ---------- 合成 ----------
 // raw → 512×512 透明底，按需加字
-export async function composeSticker(rawPath, dst, { caption = "", captionPos = "bottom", size = 512, fill, stroke } = {}) {
+export async function composeSticker(rawPath, dst, { caption = "", captionPos = "bottom", size = 512, fill, stroke, bg } = {}) {
   const meta = await sharp(rawPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const st = alphaStats(meta.data, meta.info.width, meta.info.height);
   const bb = st.bbox ?? { x: 0, y: 0, w: meta.info.width, h: meta.info.height };
   const cropped = await sharp(rawPath).extract({ left: bb.x, top: bb.y, width: bb.w, height: bb.h }).png().toBuffer();
-  await writeFile(dst, await composeCanvas(cropped, { caption, captionPos, size, fill, stroke }));
+  await writeFile(dst, await composeCanvas(cropped, { caption, captionPos, size, fill, stroke, bg }));
 }
 
 // 把裁好的主体放进方形画布并加字，返回 PNG buffer
-async function composeCanvas(croppedPng, { caption = "", captionPos = "bottom", size = 512, fill = "#ffffff", stroke = "#1d1d1f" }) {
+// bg：底色（圆角方块铺满画布）；capDy：配字的纵向偏移（动图字体跳动用）
+async function composeCanvas(croppedPng, { caption = "", captionPos = "bottom", size = 512, fill = "#ffffff", stroke = "#1d1d1f", bg = null, capDy = 0 }) {
   ensureFont();
   const img = await loadImage(croppedPng);
   const hasCap = caption.trim() && captionPos !== "none";
@@ -146,6 +147,13 @@ async function composeCanvas(croppedPng, { caption = "", captionPos = "bottom", 
 
   const cv = createCanvas(size, size);
   const ctx = cv.getContext("2d");
+  if (bg) {
+    const r = size * 0.14;
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.roundRect(0, 0, size, size, r);
+    ctx.fill();
+  }
   ctx.drawImage(img, box.x + (box.w - dw) / 2, box.y + (box.h - dh) / 2, dw, dh);
 
   if (hasCap) {
@@ -158,7 +166,7 @@ async function composeCanvas(croppedPng, { caption = "", captionPos = "bottom", 
     }
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    const cy = captionPos === "top" ? pad + capH / 2 : size - pad - capH / 2;
+    const cy = (captionPos === "top" ? pad + capH / 2 : size - pad - capH / 2) + capDy;
     ctx.lineJoin = "round";
     ctx.lineWidth = Math.max(3, fs * 0.22);
     ctx.strokeStyle = stroke;
@@ -170,8 +178,8 @@ async function composeCanvas(croppedPng, { caption = "", captionPos = "bottom", 
 }
 
 // ---------- 动图 ----------
-// API 返回的 GIF（白底）→ 逐帧去背景 → 所有帧用同一个裁切框（防止主体抖动）→ 加字 → 输出多个尺寸
-export async function processGif(src, outs, { caption = "", captionPos = "bottom", fill, stroke, maxBytes = 500 * 1024 } = {}) {
+// API 返回的 GIF（透明底；旧的白底 GIF 会逐帧去背景）→ → 所有帧用同一个裁切框（防止主体抖动）→ 加字 → 输出多个尺寸
+export async function processGif(src, outs, { caption = "", captionPos = "bottom", fill, stroke, bg = null, captionAnim = null, maxBytes = 500 * 1024 } = {}) {
   const meta = await sharp(src, { animated: true }).metadata();
   const n = meta.pages ?? 1;
   const fh = meta.pageHeight ?? meta.height;
@@ -205,7 +213,11 @@ export async function processGif(src, outs, { caption = "", captionPos = "bottom
   const results = [];
   for (const { path, size } of outs) {
     const composed = [];
-    for (const c of crops) composed.push(await composeCanvas(c, { caption, captionPos, size, fill, stroke }));
+    for (const [i, c] of crops.entries()) {
+      // bounce：配字随帧上下跳动，跳一个来回正好一圈循环
+      const capDy = captionAnim === "bounce" ? -Math.abs(Math.sin((Math.PI * i) / crops.length * 2)) * size * 0.05 : 0;
+      composed.push(await composeCanvas(c, { caption, captionPos, size, fill, stroke, bg, capDy }));
+    }
     // 超过体积上限时逐步减少颜色数
     let bytes = 0;
     for (const colours of [256, 128, 64, 32]) {

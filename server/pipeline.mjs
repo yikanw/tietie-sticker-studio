@@ -113,7 +113,13 @@ async function generateImage(p, { prompt, refImages, signal, onProgress, tmpName
 function overlayOpts(p, s) {
   const cs = captionStyle(p.analysis);
   if (cs.mode === "model") return { caption: "", captionPos: "none" };
-  return { caption: s.caption, captionPos: s.captionPos, fill: cs.fill, stroke: cs.stroke };
+  const st = styleById(p.analysis?.styleId);
+  const idx = Math.max(0, p.stickers.indexOf(s));
+  return {
+    caption: s.caption, captionPos: s.captionPos, fill: cs.fill, stroke: cs.stroke,
+    bg: st.bgPalette?.length ? st.bgPalette[idx % st.bgPalette.length] : null, // 风格带底色时按顺序轮换
+    captionAnim: st.captionAnim ?? null, // 动图里配字的动效（bounce）
+  };
 }
 
 // 文字步骤（识别/策划）走「生文」设置的通道，和出图互不影响

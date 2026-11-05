@@ -17,5 +17,10 @@ research-*/
 *.zip
 /*.gif
 
+# 演示视频工程的素材和产物（体积大，从 data/ 和录屏重新生成）
+demo-video/public/
+demo-video/out/
+docs/demo/*.mp4
+
 # 系统
 .DS_Store

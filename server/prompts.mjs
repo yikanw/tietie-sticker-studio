@@ -17,6 +17,11 @@ export const isTextPack = (a) => a?.subjectType === "text";
 // 纯文字包的字一定由画面画出；其余按风格的配字方式
 export const captionStyle = (a) => (isTextPack(a) ? { mode: "model" } : styleById(a?.styleId).caption ?? { mode: "overlay" });
 export const modelCaption = (a) => captionStyle(a).mode === "model";
+// 白色贴纸描边：风格要求时才加；默认明确禁止（白边在微信深色模式里很难抠干净）
+export const borderRule = (a) =>
+  styleById(a?.styleId).whiteBorder && !isTextPack(a)
+    ? "- 主体外围加一圈均匀、干净的粗白色贴纸描边，描边外面是透明背景"
+    : "- 不要白色贴纸描边、不要白色外轮廓（strictly NO white sticker border, NO white outline），道具和文字牌直接悬空，不要连接杆";
 
 // 用户上传的多张图各自的用途
 export const IMAGE_ROLES = {
@@ -193,6 +198,7 @@ ${drawText && item.caption ? `画面中的文字：「${item.caption}」——�
 - 单张图、单个画面（不要四宫格），表情和动作要夸张、一眼能看懂，适合作为聊天表情包
 - 主体完整不被裁切，居中，四周留出少量空白
 - 透明背景
+${borderRule(analysis)}
 ${drawText ? "- 除上面指定的文字外不要出现其他文字" : `- 画面中不要出现任何文字、字母、对话框${captionSpace ? "\n- 画面下方留出约 20% 的空白，后期会加字" : ""}`}`;
 }
 
@@ -232,7 +238,8 @@ ${drawText && item.caption ? `画面中的文字：「${item.caption}」——�
 - 单个画面（不要四宫格），镜头不动，主体完整居中，四周留出少量空白
 - 动作幅度明显、节奏有喜感，一眼能看出【${item.emotion}】
 - 最后一帧自然衔接回第一帧，无缝循环
-- 纯白色背景
+- 透明背景
+${borderRule(analysis)}
 ${drawText ? "- 除上面指定的文字外不要出现其他文字" : "- 画面中不要出现任何文字、字母、对话框（文字后期再加）"}`;
 }
 
@@ -247,6 +254,7 @@ ${motionLine(item, motion, "附图1 现有姿态")}
 - 主体外观、配色、画风、构图与附图1 保持一致，镜头不动
 - 动作幅度明显、节奏有喜感，一眼能看出【${item.emotion}】
 - 最后一帧自然衔接回第一帧，无缝循环
-- 纯白色背景，${drawText && item.caption ? `文字「${item.caption}」保持清楚，可以有弹跳、抖动、闪烁等文字动效` : "画面中不要出现任何文字、对话框"}
+${borderRule(analysis)}
+- 透明背景，${drawText && item.caption ? `文字「${item.caption}」保持清楚，可以有弹跳、抖动、闪烁等文字动效` : "画面中不要出现任何文字、对话框"}
 画风：${styleText(analysis)}`;
 }

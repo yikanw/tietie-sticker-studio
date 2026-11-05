@@ -1,7 +1,8 @@
 // 贴贴机 TIETIE（表情包工作台）本地服务
 import express from "express";
 import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative, sep } from "node:path";
+import { homedir } from "node:os";
 import { exec, execFile } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import { ROOT, RUNS_DIR, ARCHIVE_DIR, DATA_DIR } from "./paths.mjs";
@@ -10,6 +11,14 @@ import { createProject, act, recover, pumpAll, stopProject } from "./pipeline.mj
 import { ensureCodex, codexEnv, codexEvents } from "./codex-service.mjs";
 import { publicSettings, updateSettings } from "./settings.mjs";
 import { STYLES, GUIDE } from "./prompts.mjs";
+
+// 给界面看的路径：不暴露本机用户名。仓库内显示相对路径，其他位置把主目录换成 ~
+function shown(p) {
+  const r = relative(ROOT, p);
+  if (r && !r.startsWith("..")) return r.split(sep).join("/");
+  const h = homedir();
+  return p.startsWith(h) ? "~" + p.slice(h.length) : p;
+}
 import { pricingInfo } from "./billing.mjs";
 import { initSpend, getSpend, resetSpend, spendEvents } from "./spend.mjs";
 
@@ -35,7 +44,7 @@ const wrap = (fn) => async (req, res) => {
 };
 
 app.get("/api/env", wrap(async () => ({ codex: codexEnv(), settings: publicSettings(), styles: stylesWithSamples(), guide: GUIDE, pricing: pricingInfo(), apiSpend: getSpend(),
-  paths: { data: DATA_DIR, runs: RUNS_DIR, archive: ARCHIVE_DIR },
+  paths: { data: shown(DATA_DIR), runs: shown(RUNS_DIR), archive: shown(ARCHIVE_DIR) },
 })));
 app.post("/api/spend/reset", wrap(async () => resetSpend()));
 
@@ -100,7 +109,7 @@ app.get("/api/archive", wrap(async () =>
   listArchived().map(({ folder, project: p }) => ({
     folder, id: p.id, name: p.name, createdAt: p.createdAt, archivedAt: p.archivedAt ?? null,
     total: p.stickers?.length ?? 0, cost: p.costTotal ?? 0,
-    path: join(ARCHIVE_DIR, folder), cover: coverOf(p, `/archive-files/${encodeURIComponent(folder)}`),
+    path: shown(join(ARCHIVE_DIR, folder)), cover: coverOf(p, `/archive-files/${encodeURIComponent(folder)}`),
   })),
 ));
 app.post("/api/archive/:folder/restore", wrap(async (req) => {
@@ -113,7 +122,7 @@ app.get("/api/projects", wrap(async () =>
   listProjects().map((p) => ({
     id: p.id, name: p.name, createdAt: p.createdAt, stage: p.stage, stageStatus: p.stageStatus,
     total: p.stickers.length, done: p.stickers.filter((x) => x.current).length, cost: p.costTotal ?? 0,
-    path: projectDir(p.id), cover: coverOf(p, `/files/${p.id}`),
+    path: shown(projectDir(p.id)), cover: coverOf(p, `/files/${p.id}`),
   })),
 ));
 app.post("/api/projects", wrap(async (req) => createProject(req.body ?? {})));
