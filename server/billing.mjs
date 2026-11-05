@@ -110,7 +110,7 @@ function codexTurnDefault() {
 export const gifClass = (frames, size = "512x512") => `gif${frames}@${size}`;
 // 实测 8 帧 512² 输出 974 token；没有校准数据时按帧数线性估
 export function estimateGif({ frames = 8, refCount = 2 } = {}) {
-  const s = getSettings().api;
+  const s = getSettings().image;
   const model = s.model;
   const quality = s.quality || "medium";
   const p = imagePrice(model);
@@ -130,14 +130,15 @@ export function estimatePerSticker({ codexModel, edit = false, gif = null } = {}
   if (gif) return estimateGif({ frames: gif.frames, refCount: gif.refCount ?? 2 });
   const s = getSettings();
   const refCount = edit ? 2 : 1;
-  if (s.imageBackend === "api") {
-    const cls = sizeClassFromSetting(s.api.size);
-    const img = estimateImage({ model: s.api.model, quality: s.api.quality, cls, refCount, promptChars: 700 });
+  if (s.image.backend === "api") {
+    const m = s.image;
+    const cls = sizeClassFromSetting(m.size);
+    const img = estimateImage({ model: m.model, quality: m.quality, cls, refCount, promptChars: 700 });
     return {
       usd: img.usd,
       parts: { image: img.usd, agent: 0 },
-      basis: `API ${s.api.model} · ${s.api.quality} · ${s.api.size}`,
-      calibrated: calAvg(`out:${s.api.model}:${s.api.quality}:${cls}`) != null,
+      basis: `API ${m.model} · ${m.quality} · ${m.size}`,
+      calibrated: calAvg(`out:${m.model}:${m.quality}:${cls}`) != null,
     };
   }
   const a = PRICING.codexImageAssume;

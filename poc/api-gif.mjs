@@ -5,18 +5,18 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { fetch, FormData } from "undici";
-import { getSettings, apiKey } from "../server/settings.mjs";
+import { getSettings, imageKey } from "../server/settings.mjs";
 import { dispatcherFor } from "../server/proxy.mjs";
 
 const [mode = "gen", ...rest] = process.argv.slice(2);
 const args = {};
 for (let i = 0; i < rest.length; i++) if (rest[i].startsWith("--")) args[rest[i].slice(2)] = rest[++i];
 
-const s = getSettings().api;
-const key = apiKey();
+const s = getSettings().image;
+const key = imageKey();
 if (!key) throw new Error("没有 API Key");
 const base = (s.baseUrl || "https://api.openai.com/v1").replace(/\/+$/, "");
-const { dispatcher, proxy } = dispatcherFor(s.proxy);
+const { dispatcher, proxy } = dispatcherFor(getSettings().proxy);
 const outDir = resolve("poc/out/api-gif");
 await mkdir(outDir, { recursive: true });
 

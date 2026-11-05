@@ -225,23 +225,23 @@ export interface CodexEnv {
   rateLimits: { primary?: RateWindow; secondary?: RateWindow } | null;
 }
 
+export interface ApiConn {
+  backend: "codex" | "api";
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  hasKey: boolean;
+  keyHint: string;
+  keyFrom: "" | "self" | "image" | "env";
+}
+
 export interface Settings {
-  imageBackend: "codex" | "api";
   concurrency: number;
+  proxy: string;
+  effectiveProxy: string;
   codex: { model: string };
-  text: { apiModel: string; effort: string };
-  api: {
-    baseUrl: string;
-    apiKey: string;
-    model: string;
-    quality: string;
-    size: string;
-    hasKey: boolean;
-    keyHint: string;
-    keyFromEnv: boolean;
-    proxy: string;
-    effectiveProxy: string;
-  };
+  image: ApiConn & { quality: string; size: string };
+  text: ApiConn & { format: "responses" | "chat"; effort: string };
 }
 
 export interface Env {

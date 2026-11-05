@@ -31,3 +31,11 @@ export function dispatcherFor(configured) {
   if (!agents.has(url)) agents.set(url, new ProxyAgent(url));
   return { dispatcher: agents.get(url), proxy: url };
 }
+
+// 按目标地址选代理：本机 / 局域网地址（自建或本地模型服务）一律直连
+export function dispatcherForUrl(target, configured) {
+  let host = "";
+  try { host = new URL(target).hostname; } catch {}
+  const local = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|\[?::1\]?$)/.test(host) || host.endsWith(".local");
+  return dispatcherFor(local ? "direct" : configured);
+}

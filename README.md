@@ -7,14 +7,18 @@
 不一定要有主角：纯文字、祝福花字这类表情包也能做。
 每一步都可以停下来人工确认，生成过程可以暂停、中断，单张可以重画、局部修改、改配字。
 
-出图和文字（识别、策划）走同一个通道，在设置里切换：
+**生图**和**生文**（识别、策划）在设置里分开配置，各自选通道，互不影响：
 
-| 通道 | 说明 |
-|---|---|
-| **Codex 订阅**（默认） | 通过本机 `codex app-server` 调用，走 ChatGPT 订阅额度，无需 API Key；模型默认 `gpt-6.1-terra` |
-| **OpenAI API** | 出图调 Images API（默认 `gpt-image-2.6-sunburst`，可改 `gpt-image-2.6-flare`）；识别/策划调 Responses API（默认 `gpt-6.1-terra`），需要 API Key |
+| | Codex 订阅（默认） | API |
+|---|---|---|
+| 生图 | 本机 `codex app-server`，走 ChatGPT 订阅额度 | Base URL + Key + 模型，需兼容 OpenAI Images API（默认 `gpt-image-2.6-sunburst`） |
+| 生文 | 同上，模型默认 `gpt-6.1-terra` | Base URL + Key + 模型 + 接口格式：`Responses`（OpenAI）或 `Chat Completions`（多数第三方 / 本地模型服务，模型要能看图） |
 
-文字步骤的思考强度默认 medium，可在设置里改。
+- 生文的 Key 留空时：Base URL 和生图相同就沿用生图的 Key；环境变量 `OPENAI_API_KEY` 只用于官方地址，不会发给第三方
+- Chat Completions 先按 JSON Schema 结构化输出请求，服务不支持时自动退回 JSON 模式
+- 本机 / 局域网地址（如 `http://localhost:11434/v1`）自动直连、可以不填 Key
+- 动图始终走生图的 API 配置；思考强度（默认 medium）只对 Codex 和 Responses 生效
+- 第三方模型不在价格表里时按默认模型的价格估算
 
 ## 安装
 
@@ -85,7 +89,7 @@ npm start                        # 构建前端并启动，打开 http://localho
 
 ## 网络代理
 
-API 通道会自动走代理：设置里填的代理 → `HTTPS_PROXY` 等环境变量 → macOS 系统代理。设置里填 `direct` 表示直连。
+API 请求会自动走代理（本机 / 局域网地址除外）：设置里填的代理 → `HTTPS_PROXY` 等环境变量 → macOS 系统代理。设置里填 `direct` 表示直连。
 
 ## 自动质检项
 

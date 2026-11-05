@@ -13,7 +13,7 @@ import {
   addCost, priceText, priceApiImage, estimateImage, estimatePerSticker, observeCodexAgentTurn, sizeClass, sizeClassFromSetting, usdToCny, gifClass,
 } from "./billing.mjs";
 import { codexEnv } from "./codex-service.mjs";
-import { apiKey } from "./settings.mjs";
+import { imageKey } from "./settings.mjs";
 import { normalizeInput, prepareRaw, qaFromStats, composeSticker, resizeTo, processGif } from "./imaging.mjs";
 import {
   ANALYSIS_SCHEMA, PLAN_SCHEMA, analysisPrompt, planPrompt, stylePreviewPrompt, stickerPrompt, editPrompt, animatePrompt, directGifPrompt, styleById,
@@ -78,16 +78,16 @@ export function stopProject(p) {
 // 统一的出图入口：根据设置走 Codex 订阅或 API，并记账
 async function generateImage(p, { prompt, refImages, signal, onProgress, tmpName, cost }) {
   const s = getSettings();
-  if (s.imageBackend === "api") {
+  if (s.image.backend === "api") {
     onProgress?.("drawing");
     const r = await runApiImage({ prompt, refImages, signal });
     const tmp = f(p, tmpName);
     await writeFile(tmp, r.buffer);
-    const cls = sizeClassFromSetting(s.api.size);
+    const cls = sizeClassFromSetting(s.image.size);
     const priced = r.usage
-      ? { ...priceApiImage({ model: s.api.model, quality: s.api.quality, cls, refCount: refImages.length, usage: r.usage }), estimated: false }
-      : { ...estimateImage({ model: s.api.model, quality: s.api.quality, cls, refCount: refImages.length, promptChars: prompt.length }), estimated: true };
-    const entry = addCost(p, { ...cost, backend: "api", model: s.api.model, usd: priced.usd, estimated: priced.estimated, tokens: priced.tokens });
+      ? { ...priceApiImage({ model: s.image.model, quality: s.image.quality, cls, refCount: refImages.length, usage: r.usage }), estimated: false }
+      : { ...estimateImage({ model: s.image.model, quality: s.image.quality, cls, refCount: refImages.length, promptChars: prompt.length }), estimated: true };
+    const entry = addCost(p, { ...cost, backend: "api", model: s.image.model, usd: priced.usd, estimated: priced.estimated, tokens: priced.tokens });
     return { src: tmp, usedRef: r.usedRef, revisedPrompt: r.revisedPrompt, backend: "api", cost: entry };
   }
   let r;
@@ -116,9 +116,9 @@ function overlayOpts(p, s) {
   return { caption: s.caption, captionPos: s.captionPos, fill: cs.fill, stroke: cs.stroke };
 }
 
-// 文字步骤（识别/策划）跟随出图通道：API 通道走 Responses API，否则走 Codex 订阅
+// 文字步骤（识别/策划）走「生文」设置的通道，和出图互不影响
 async function runText(opts) {
-  if (getSettings().imageBackend === "api") return { ...(await runApiText(opts)), backend: "api" };
+  if (getSettings().text.backend === "api") return { ...(await runApiText(opts)), backend: "api" };
   return { ...(await runCodexText(opts)), backend: "codex" };
 }
 
@@ -402,7 +402,7 @@ function newSticker(it) {
 // 重画时沿用这张的出图方式：直出动图的继续直出
 const redrawJob = (s) => (s.direct ? { mode: "direct" } : { mode: "new" });
 function needApiForDirect() {
-  if (!apiKey()) throw new Error("直出动图需要 API 通道：先在设置里填好 API Key（Codex 订阅暂未开放原生 GIF）");
+  if (!imageKey()) throw new Error("直出动图需要生图 API：先在设置 → 生图里填好 API Key（Codex 订阅暂未开放原生 GIF）");
 }
 
 function queueSticker(s, job) {
@@ -515,8 +515,8 @@ async function runAnimate(p, s, job) {
     const r = await runApiImage({ prompt, refImages, signal: c.signal, gif: { frames, ms, size: "512x512" } });
     const raw = `a-${aid}-raw.gif`;
     await writeFile(f(p, raw), r.buffer);
-    const model = getSettings().api.model;
-    const quality = getSettings().api.quality || "medium";
+    const model = getSettings().image.model;
+    const quality = getSettings().image.quality || "medium";
     const priced = r.usage
       ? { ...priceApiImage({ model, quality, cls: gifClass(frames), refCount: refImages.length, usage: r.usage }), estimated: false }
       : { usd: estimatePerSticker({ gif: { frames } }).usd, estimated: true };
@@ -575,8 +575,8 @@ async function runDirect(p, s, job) {
     const r = await runApiImage({ prompt, refImages, signal: c.signal, gif: { frames, ms, size: "512x512" } });
     const raw = `a-${aid}-raw.gif`;
     await writeFile(f(p, raw), r.buffer);
-    const model = getSettings().api.model;
-    const quality = getSettings().api.quality || "medium";
+    const model = getSettings().image.model;
+    const quality = getSettings().image.quality || "medium";
     const priced = r.usage
       ? { ...priceApiImage({ model, quality, cls: gifClass(frames), refCount: refImages.length, usage: r.usage }), estimated: false }
       : { usd: estimatePerSticker({ gif: { frames, refCount: refImages.length } }).usd, estimated: true };
@@ -639,7 +639,7 @@ async function recomposeAnim(p, s) {
 }
 
 function queueAnimate(p, s, { motion, frames, ms }) {
-  if (!apiKey()) throw new Error("动图需要 API 通道：先在设置里填好 API Key（Codex 订阅暂未开放原生 GIF）");
+  if (!imageKey()) throw new Error("动图需要生图 API：先在设置 → 生图里填好 API Key（Codex 订阅暂未开放原生 GIF）");
   if (!s.current) throw new Error("先生成静图，再做动图");
   if (!p.character.chosenId) throw new Error("还没有确认风格设定图");
   // 用户写了动作就记到这张上，下次做动图/直出沿用

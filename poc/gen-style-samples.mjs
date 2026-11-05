@@ -51,7 +51,7 @@ ${cap}
 const ids = process.argv.slice(2).length ? process.argv.slice(2) : Object.keys(SAMPLES);
 await mkdir(OUT, { recursive: true });
 initSpend([]);
-const { model, quality } = getSettings().api;
+const { model, quality } = getSettings().image;
 let total = 0;
 
 async function one(id) {

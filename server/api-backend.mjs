@@ -2,16 +2,17 @@
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { fetch, FormData } from "undici";
-import { getSettings, apiKey } from "./settings.mjs";
-import { dispatcherFor } from "./proxy.mjs";
+import { getSettings, imageKey, OPENAI_BASE } from "./settings.mjs";
+import { dispatcherForUrl } from "./proxy.mjs";
 
 // gif: { frames, ms } 时输出 GIF（白底，GIF 不支持透明；所有帧拼成一张精灵表，长边 ≤ 3840，所以帧尺寸用 512）
 export async function runApiImage({ prompt, refImages = [], signal, transparent = true, gif = null }) {
-  const s = getSettings().api;
-  const key = apiKey();
-  if (!key) throw new Error("还没有配置 API Key（设置 → API 通道）");
-  const base = (s.baseUrl || "https://api.openai.com/v1").replace(/\/+$/, "");
-  const { dispatcher, proxy } = dispatcherFor(s.proxy);
+  const st = getSettings();
+  const s = st.image;
+  const key = imageKey();
+  if (!key) throw new Error("还没有配置生图 API Key（设置 → 生图）");
+  const base = (s.baseUrl || OPENAI_BASE).replace(/\/+$/, "");
+  const { dispatcher, proxy } = dispatcherForUrl(base, st.proxy);
   const common = gif
     ? {
         model: s.model,

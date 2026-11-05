@@ -22,6 +22,7 @@
 
 - `server/pipeline.mjs`：流程与队列（识别 → 风格设定图 → 计划 → 生成 → 导出）
 - `server/codex-service.mjs`：通过 `codex app-server` 调用订阅出文字/出图
-- `server/api-backend.mjs`：OpenAI Images API 通道；`server/api-text.mjs`：API 通道的识别/策划（Responses API）
+- `server/settings.mjs`：生图 / 生文两套独立配置（各自通道、Base URL、Key、模型）
+- `server/api-backend.mjs`：生图 API（兼容 OpenAI Images API）；`server/api-text.mjs`：生文 API（Responses 或 Chat Completions）
 - `server/prompts.mjs`、`server/styles.json`：提示词与风格预设；`server/style-guide.json`：主体/语气/场景/热梗
 - `web/src/`：前端

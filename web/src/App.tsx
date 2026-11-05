@@ -152,7 +152,7 @@ function Home({ env, onSettings, reloadEnv }: { env: Env | null; onSettings: () 
     }
   };
 
-  const backend = env?.settings.imageBackend === "api" ? `API · ${env.settings.api.model}` : `Codex 订阅 · ${env?.codex.model ?? "…"}`;
+  const chan = (c?: { backend: string; model: string }) => (c?.backend === "api" ? `API · ${c.model}` : `Codex 订阅 · ${env?.codex.model ?? "…"}`);
 
   return (
     <div className="page">
@@ -261,7 +261,7 @@ function Home({ env, onSettings, reloadEnv }: { env: Env | null; onSettings: () 
           <p className="hint">
             {autoRun ? "识别、定风格、出计划、生成会一路跑完，你随时可以暂停和修改。" : "识别、风格设定、表情计划三个环节会停下来等你确认。"}
             <br />
-            出图通道：{backend}
+            生图：{chan(env?.settings.image)}　生文：{chan(env?.settings.text)}
           </p>
           {err && <p className="error">{err}</p>}
           {!images.length && prompt.trim() && <p className="hint">没有上传图片：将按你的描述原创设计形象（或做纯文字包）。</p>}
@@ -340,16 +340,17 @@ function SettingsModal({ env, onClose, onSaved, onSpendReset }: { env: Env; onCl
     }
   };
   const [s, setS] = useState<Settings>(env.settings);
-  const [key, setKey] = useState("");
+  const [imgKey, setImgKey] = useState("");
+  const [txtKey, setTxtKey] = useState("");
   const [msg, setMsg] = useState("");
   const save = async () => {
     try {
       const r = await api.put<Settings>("/api/settings", {
-        imageBackend: s.imageBackend,
         concurrency: s.concurrency,
+        proxy: s.proxy,
         codex: { model: s.codex.model },
-        text: { apiModel: s.text.apiModel, effort: s.text.effort },
-        api: { baseUrl: s.api.baseUrl, proxy: s.api.proxy, model: s.api.model, quality: s.api.quality, size: s.api.size, ...(key ? { apiKey: key } : {}) },
+        image: { backend: s.image.backend, baseUrl: s.image.baseUrl, model: s.image.model, quality: s.image.quality, size: s.image.size, ...(imgKey ? { apiKey: imgKey } : {}) },
+        text: { backend: s.text.backend, baseUrl: s.text.baseUrl, model: s.text.model, format: s.text.format, effort: s.text.effort, ...(txtKey ? { apiKey: txtKey } : {}) },
       });
       onSaved(r);
       onClose();
@@ -358,104 +359,139 @@ function SettingsModal({ env, onClose, onSaved, onSpendReset }: { env: Env; onCl
     }
   };
   const set = (patch: Partial<Settings>) => setS({ ...s, ...patch });
-  const setApi = (patch: Partial<Settings["api"]>) => setS({ ...s, api: { ...s.api, ...patch } });
+  const setImg = (patch: Partial<Settings["image"]>) => setS({ ...s, image: { ...s.image, ...patch } });
+  const setTxt = (patch: Partial<Settings["text"]>) => setS({ ...s, text: { ...s.text, ...patch } });
+  const keyPh = (c: Settings["image"] | Settings["text"], fallback: string) =>
+    c.hasKey
+      ? `已保存 ${c.keyHint}${c.keyFrom === "env" ? "（来自环境变量）" : c.keyFrom === "image" ? "（沿用生图的 Key）" : ""}，留空不修改`
+      : fallback;
+  const usesCodex = s.image.backend === "codex" || s.text.backend === "codex";
   return (
     <div className="modal-mask" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2>设置</h2>
-        <div className="field">
-          <span>出图通道</span>
-          <div className="seg">
-            <button className={s.imageBackend === "codex" ? "on" : ""} onClick={() => set({ imageBackend: "codex" })}>Codex 订阅</button>
-            <button className={s.imageBackend === "api" ? "on" : ""} onClick={() => set({ imageBackend: "api" })}>OpenAI API</button>
-          </div>
-          <small className="muted">识别、策划这类文字步骤也走同一个通道。</small>
-        </div>
-
-        <div className="row">
-          <label className="field grow">
-            <span>文字模型（识别 / 策划）</span>
-            {s.imageBackend === "api" ? (
-              <input list="text-models" value={s.text.apiModel} onChange={(e) => set({ text: { ...s.text, apiModel: e.target.value } })} />
-            ) : (
-              <input value={`Codex 模型：${env.codex.model ?? "—"}（在下方切换）`} disabled />
-            )}
-            <datalist id="text-models">
-              <option value="gpt-6.1-terra" />
-              <option value="gpt-6.1-sol" />
-              <option value="gpt-6-luna" />
-            </datalist>
-          </label>
-          <label className="field">
-            <span>思考强度</span>
-            <select value={s.text.effort} onChange={(e) => set({ text: { ...s.text, effort: e.target.value } })}>
-              <option value="low">low</option>
-              <option value="medium">medium（推荐）</option>
-              <option value="high">high</option>
-            </select>
-          </label>
-        </div>
 
         <fieldset>
-          <legend>Codex（{env.codex.version ?? "未连接"}）</legend>
-          <label className="field">
-            <span>模型</span>
-            <select value={s.codex.model} onChange={(e) => set({ codex: { model: e.target.value } })}>
-              <option value="">自动（优先 gpt-6.1-terra）</option>
-              {env.codex.models.map((m) => <option key={m}>{m}</option>)}
-            </select>
-          </label>
-        </fieldset>
-
-        <fieldset disabled={s.imageBackend !== "api"} className={s.imageBackend !== "api" ? "dim" : ""}>
-          <legend>OpenAI API</legend>
-          <label className="field">
-            <span>Base URL</span>
-            <input value={s.api.baseUrl} onChange={(e) => setApi({ baseUrl: e.target.value })} />
-          </label>
-          <label className="field">
-            <span>代理</span>
-            <input
-              value={s.api.proxy}
-              onChange={(e) => setApi({ proxy: e.target.value })}
-              placeholder={`留空自动检测${s.api.effectiveProxy ? `（当前 ${s.api.effectiveProxy}）` : "（未检测到）"}；填 direct 表示直连`}
-            />
-          </label>
-          <label className="field">
-            <span>API Key</span>
-            <input
-              type="password"
-              placeholder={s.api.hasKey ? `已保存 ${s.api.keyHint}${s.api.keyFromEnv ? "（来自环境变量）" : ""}，留空不修改` : "sk-…"}
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-              autoComplete="off"
-            />
-          </label>
-          <div className="row">
-            <label className="field grow">
-              <span>模型</span>
-              <input list="img-models" value={s.api.model} onChange={(e) => setApi({ model: e.target.value })} />
-              <datalist id="img-models">
-                <option value="gpt-image-2.6-sunburst" />
-                <option value="gpt-image-2.6-flare" />
-              </datalist>
+          <legend>生图</legend>
+          <div className="seg">
+            <button className={s.image.backend === "codex" ? "on" : ""} onClick={() => setImg({ backend: "codex" })}>Codex 订阅</button>
+            <button className={s.image.backend === "api" ? "on" : ""} onClick={() => setImg({ backend: "api" })}>API</button>
+          </div>
+          <div className={s.image.backend !== "api" ? "dim" : ""}>
+            <label className="field">
+              <span>Base URL</span>
+              <input value={s.image.baseUrl} onChange={(e) => setImg({ baseUrl: e.target.value })} placeholder="https://api.openai.com/v1" />
             </label>
             <label className="field">
-              <span>质量</span>
-              <select value={s.api.quality} onChange={(e) => setApi({ quality: e.target.value })}>
+              <span>API Key</span>
+              <input type="password" autoComplete="off" value={imgKey} onChange={(e) => setImgKey(e.target.value)} placeholder={keyPh(s.image, "sk-…")} />
+            </label>
+            <div className="row">
+              <label className="field grow">
+                <span>模型</span>
+                <input list="img-models" value={s.image.model} onChange={(e) => setImg({ model: e.target.value })} />
+                <datalist id="img-models">
+                  <option value="gpt-image-2.6-sunburst" />
+                  <option value="gpt-image-2.6-flare" />
+                </datalist>
+              </label>
+              <label className="field">
+                <span>质量</span>
+                <select value={s.image.quality} onChange={(e) => setImg({ quality: e.target.value })}>
+                  {["low", "medium", "high"].map((x) => <option key={x}>{x}</option>)}
+                </select>
+              </label>
+              <label className="field">
+                <span>尺寸</span>
+                <select value={s.image.size} onChange={(e) => setImg({ size: e.target.value })}>
+                  {["1024x1024", "1024x1536", "1536x1024", "auto"].map((x) => <option key={x}>{x}</option>)}
+                </select>
+              </label>
+            </div>
+          </div>
+          <small className="muted">
+            {s.image.backend === "api" ? "需兼容 OpenAI Images API（/images/generations、/images/edits）。" : "走 ChatGPT 订阅额度。"}
+            动图始终用这里的 API 配置。
+          </small>
+        </fieldset>
+
+        <fieldset>
+          <legend>生文（识别 / 策划）</legend>
+          <div className="seg">
+            <button className={s.text.backend === "codex" ? "on" : ""} onClick={() => setTxt({ backend: "codex" })}>Codex 订阅</button>
+            <button className={s.text.backend === "api" ? "on" : ""} onClick={() => setTxt({ backend: "api" })}>API</button>
+          </div>
+          {s.text.backend === "api" && (
+            <>
+              <label className="field">
+                <span>Base URL</span>
+                <input value={s.text.baseUrl} onChange={(e) => setTxt({ baseUrl: e.target.value })} placeholder="https://api.openai.com/v1" />
+              </label>
+              <label className="field">
+                <span>API Key</span>
+                <input type="password" autoComplete="off" value={txtKey} onChange={(e) => setTxtKey(e.target.value)} placeholder={keyPh(s.text, "sk-…（Base URL 和生图相同时可留空，沿用生图的 Key）")} />
+              </label>
+              <div className="row">
+                <label className="field grow">
+                  <span>模型</span>
+                  <input list="text-models" value={s.text.model} onChange={(e) => setTxt({ model: e.target.value })} />
+                  <datalist id="text-models">
+                    <option value="gpt-6.1-terra" />
+                    <option value="gpt-6.1-sol" />
+                    <option value="gpt-6-luna" />
+                  </datalist>
+                </label>
+                <label className="field">
+                  <span>接口格式</span>
+                  <select value={s.text.format} onChange={(e) => setTxt({ format: e.target.value as Settings["text"]["format"] })}>
+                    <option value="responses">Responses</option>
+                    <option value="chat">Chat Completions</option>
+                  </select>
+                </label>
+              </div>
+              <small className="muted">第三方 / 本地模型服务一般选 Chat Completions，模型需要能看图。</small>
+            </>
+          )}
+          {!(s.text.backend === "api" && s.text.format === "chat") && (
+            <label className="field">
+              <span>思考强度</span>
+              <select value={s.text.effort} onChange={(e) => setTxt({ effort: e.target.value })}>
                 <option value="low">low</option>
-                <option value="medium">medium</option>
+                <option value="medium">medium（推荐）</option>
                 <option value="high">high</option>
               </select>
             </label>
+          )}
+        </fieldset>
+
+        <fieldset>
+          <legend>通用</legend>
+          {usesCodex && (
             <label className="field">
-              <span>尺寸</span>
-              <select value={s.api.size} onChange={(e) => setApi({ size: e.target.value })}>
-                {["1024x1024", "1024x1536", "1536x1024", "auto"].map((x) => <option key={x}>{x}</option>)}
+              <span>Codex 模型（{env.codex.version ?? "未连接"}）</span>
+              <select value={s.codex.model} onChange={(e) => set({ codex: { model: e.target.value } })}>
+                <option value="">自动（优先 gpt-6.1-terra）</option>
+                {env.codex.models.map((m) => <option key={m}>{m}</option>)}
+              </select>
+            </label>
+          )}
+          <div className="row">
+            <label className="field grow">
+              <span>代理</span>
+              <input
+                value={s.proxy}
+                onChange={(e) => set({ proxy: e.target.value })}
+                placeholder={`留空自动${s.effectiveProxy ? `（当前 ${s.effectiveProxy}）` : "（未检测到）"}；direct 直连`}
+              />
+            </label>
+            <label className="field">
+              <span>同时生成</span>
+              <select value={s.concurrency} onChange={(e) => set({ concurrency: Number(e.target.value) })}>
+                {[1, 2, 3, 4, 6, 8].map((n) => <option key={n} value={n}>{n} 张</option>)}
               </select>
             </label>
           </div>
-          <small className="muted">Key 只保存在本机 data/settings.json。</small>
+          <small className="muted">Key 只保存在本机 data/settings.json；本机 / 局域网地址自动直连。</small>
         </fieldset>
 
         <div className="row spend-row">
@@ -470,12 +506,6 @@ function SettingsModal({ env, onClose, onSaved, onSpendReset }: { env: Env; onCl
         </div>
 
 
-        <label className="field">
-          <span>同时生成几张</span>
-          <select value={s.concurrency} onChange={(e) => set({ concurrency: Number(e.target.value) })}>
-            {[1, 2, 3, 4, 6, 8].map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
-        </label>
         {msg && <p className="error">{msg}</p>}
         <div className="row end">
           <button className="ghost" onClick={onClose}>取消</button>

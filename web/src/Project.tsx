@@ -43,7 +43,8 @@ export function ProjectView({ id, env, onSettings }: { id: string; env: Env | nu
   const cur = view ?? p.stage;
   const generating = p.stickers.filter((s) => s.status === "generating").length;
   const queued = p.stickers.filter((s) => s.status === "queued").length;
-  const backend = env?.settings.imageBackend === "api" ? "API" : "Codex 订阅";
+  const st = env?.settings;
+  const backend = `生图 ${st?.image.backend === "api" ? "API" : "Codex"} · 生文 ${st?.text.backend === "api" ? "API" : "Codex"}`;
 
   return (
     <div className="page">
@@ -109,8 +110,8 @@ export function ProjectView({ id, env, onSettings }: { id: string; env: Env | nu
       <main className="stage-body">
         {cur === "analyze" && <AnalysisPanel p={p} env={env} run={run} busy={busy} past={order(p.stage) > 0} />}
         {cur === "character" && <StylePanel p={p} env={env} run={run} />}
-        {cur === "plan" && <PlanPanel p={p} run={run} hasKey={!!env?.settings.api.hasKey} />}
-        {cur === "generate" && <GeneratePanel p={p} run={run} busy={busy} rate={rate} hasKey={!!env?.settings.api.hasKey} modelText={env?.styles.find((x) => x.id === p.analysis?.styleId)?.caption.mode === "model"} />}
+        {cur === "plan" && <PlanPanel p={p} run={run} hasKey={!!env?.settings.image.hasKey} />}
+        {cur === "generate" && <GeneratePanel p={p} run={run} busy={busy} rate={rate} hasKey={!!env?.settings.image.hasKey} modelText={env?.styles.find((x) => x.id === p.analysis?.styleId)?.caption.mode === "model"} />}
       </main>
 
       {showCost && <CostModal p={p} rate={rate} onClose={() => setShowCost(false)} />}
@@ -143,7 +144,7 @@ function PlanPanel({ p, run, hasKey }: { p: Project; run: Run; hasKey: boolean }
   const set = (i: number, patch: Partial<PlanItem>) => setItems(items.map((it, j) => (j === i ? { ...it, ...patch } : it)));
   const gifCount = items.filter((it) => it.gif).length;
   const allGif = items.length > 0 && gifCount === items.length;
-  const noKey = "直出动图需要 API 通道：先在设置里填 API Key（Codex 订阅暂未开放原生 GIF）";
+  const noKey = "直出动图需要生图 API：先在设置 → 生图里填 API Key（Codex 订阅暂未开放原生 GIF）";
   if (running && !items.length)
     return <div className="card center"><span className="spinner" /><p>正在写表情计划…</p><button className="ghost small" onClick={() => run({ type: "cancelStage" })}>中断</button></div>;
   return (
@@ -256,7 +257,7 @@ function GeneratePanel({ p, run, busy, rate, hasKey, modelText }: { p: Project; 
         <button
           className="ghost"
           disabled={!hasKey || !gifTargets.length}
-          title={hasKey ? "给还没有动图的表情批量做 GIF（已通过的优先）" : "动图需要 API 通道，先在设置里填 API Key"}
+          title={hasKey ? "给还没有动图的表情批量做 GIF（已通过的优先）" : "动图需要生图 API，先在设置 → 生图里填 API Key"}
           onClick={() => setBulkGif(true)}
         >
           批量做动图 {gifTargets.length || ""}
@@ -480,7 +481,7 @@ function StickerDrawer({ p, s, run, rate, hasKey, modelText, onClose }: { p: Pro
 
         <section>
           <h4>动图 <small className="muted">API 原生 GIF，以当前静图 + 风格设定图为参考</small></h4>
-          {!hasKey && <p className="muted small">需要 API 通道：先在设置里填 API Key（Codex 订阅暂未开放原生 GIF）。</p>}
+          {!hasKey && <p className="muted small">需要生图 API：先在设置 → 生图里填 API Key（Codex 订阅暂未开放原生 GIF）。</p>}
           <textarea rows={2} value={motion} onChange={(e) => setMotion(e.target.value)} placeholder="循环动作（只写怎么动），例如：双手捂脸左右摇头，眼泪一抽一抽地往外飙。留空则按情绪自动设计" />
           <div className="row">
             <select value={frames} onChange={(e) => setFrames(Number(e.target.value))}>{[4, 6, 8, 12, 16].map((n) => <option key={n} value={n}>{n} 帧</option>)}</select>
