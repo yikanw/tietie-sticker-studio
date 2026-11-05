@@ -12,11 +12,11 @@
 
 [快速开始](#-快速开始) · [三套 Demo](#-三套-demo) · [怎么做出来的](#-怎么做出来的) · [使用说明](docs/guide.md) · [安装与配置](docs/install.md)
 
-<a href="docs/demo/tietie-demo.mp4"><img src="docs/assets/cover.jpg" width="820" alt="演示视频" /></a>
-
-<sub>▶ 点图片看 85 秒演示视频</sub>
-
 </div>
+
+https://github.com/user-attachments/assets/5b1060c4-f297-4031-bd52-44261a633c33
+
+<p align="center"><sub>85 秒演示：从上传到导出，再看三套成品</sub></p>
 
 ## ✨ 能做什么
 
