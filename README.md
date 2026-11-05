@@ -25,6 +25,8 @@
 需要：macOS / Linux，Node.js ≥ 20，Codex CLI（已用 ChatGPT 账号登录）。
 
 ```bash
+git clone https://github.com/yikanw/tietie-sticker-studio.git
+cd tietie-sticker-studio
 npm i -g @openai/codex@latest   # 版本太旧会看不到新模型
 codex login                      # 选 ChatGPT 账号登录
 npm install
