@@ -1,8 +1,9 @@
 {
-  "name": "sticker-studio",
+  "name": "tietie",
   "version": "0.1.0",
   "private": true,
-  "description": "贴贴机 TIETIE · 本地表情包工作台：上传一张图，借助 Codex 订阅生成整套表情包，可中断、质检、逐张修改",
+  "description": "贴贴机 TIETIE · 本地表情包工作台：上传图片和一句想法，用 Codex 订阅或自定义 API 生成整套微信表情包，可中断、质检、逐张修改",
+  "license": "MIT",
   "type": "module",
   "engines": {
     "node": ">=20"
