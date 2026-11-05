@@ -1,0 +1,21 @@
+# 依赖与构建产物
+node_modules/
+web/dist/
+
+# 用户数据：项目、归档、设置（含 API Key）、费用记录 —— 绝不入库
+data/
+.env
+.env.*
+
+# 实验与临时产物
+poc/out/
+output/
+*.log
+
+# 调研资料与素材：体积大、含第三方表情图片，不入库
+research-*/
+*.zip
+/*.gif
+
+# 系统
+.DS_Store

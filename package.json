@@ -1,0 +1,32 @@
+{
+  "name": "sticker-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "贴贴机 TIETIE · 本地表情包工作台：上传一张图，借助 Codex 订阅生成整套表情包，可中断、质检、逐张修改",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node server/index.mjs --dev",
+    "build": "vite build",
+    "start": "vite build && node server/index.mjs",
+    "serve": "node server/index.mjs",
+    "typecheck": "tsc --noEmit -p web"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^1.1.0",
+    "express": "^4.22.3",
+    "sharp": "^0.35.5",
+    "undici": "^8.12.3"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^6.2.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6"
+  }
+}

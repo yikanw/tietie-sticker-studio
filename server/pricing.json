@@ -1,0 +1,25 @@
+{
+  "_note": "单位：美元 / 每 100 万 token。图像模型价格来自 OpenAI 官方模型页（2026-11-05 核对）；文字模型价格 OpenAI 页面未核到，取第三方一致报价，可自行修改。",
+  "usdToCny": 7.1,
+  "imageModels": {
+    "gpt-image-2.6-sunburst": { "textIn": 5, "textCached": 1.25, "imageIn": 8, "imageCached": 2, "imageOut": 30 },
+    "gpt-image-2.6-flare": { "textIn": 5, "textCached": 1.25, "imageIn": 8, "imageCached": 2, "imageOut": 30 }
+  },
+  "defaultImageModel": "gpt-image-2.6-sunburst",
+  "_imageOutputTokens": "2.6 未公布每张图的输出 token 数，先用官方指南里早期模型的表估算；跑过 API 后会用真实 usage 自动校准（data/pricing-calibration.json）。",
+  "imageOutputTokens": {
+    "low": { "square": 272, "portrait": 408, "landscape": 400 },
+    "medium": { "square": 1056, "portrait": 1584, "landscape": 1568 },
+    "high": { "square": 4160, "portrait": 6240, "landscape": 6208 },
+    "xhigh": { "square": 4160, "portrait": 6240, "landscape": 6208 },
+    "max": { "square": 4160, "portrait": 6240, "landscape": 6208 }
+  },
+  "refImageInputTokens": 1500,
+  "codexImageAssume": { "model": "gpt-image-2.6-sunburst", "quality": "medium" },
+  "textModels": {
+    "gpt-6.1-sol": { "in": 2, "cached": 0.1, "out": 10 },
+    "gpt-6.1-terra": { "in": 1, "cached": 0.05, "out": 5 }
+  },
+  "defaultTextModel": "gpt-6.1-terra",
+  "codexAgentTurnDefault": { "inputTokens": 15000, "cachedInputTokens": 0, "outputTokens": 600 }
+}
