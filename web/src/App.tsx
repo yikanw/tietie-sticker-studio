@@ -158,7 +158,7 @@ function Home({ env, onSettings, reloadEnv }: { env: Env | null; onSettings: () 
     <div className="page">
       <header className="topbar">
         <a href="#/" className="home-link brand" title="贴贴机 TIETIE">
-          <span className="logo">贴</span>
+          <img className="logo" src="/icon-192.png" alt="贴贴机" />
           <span className="wordmark">贴贴机<small>TIETIE</small></span>
         </a>
         <div className="grow" />

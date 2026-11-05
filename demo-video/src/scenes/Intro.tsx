@@ -1,4 +1,4 @@
-import { AbsoluteFill, Easing, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Easing, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { Sticker } from "../Sticker";
 import { C, FONT, card } from "../theme";
 
@@ -39,25 +39,10 @@ export const Intro: React.FC = () => {
         );
       })}
       <div style={{ display: "flex", alignItems: "center", gap: 36, scale: String(pop(0)) }}>
-        <div
-          style={{
-            width: 190,
-            height: 190,
-            background: C.brand,
-            border: `6px solid ${C.ink}`,
-            borderRadius: 40,
-            boxShadow: `14px 14px 0 ${C.ink}`,
-            rotate: "-8deg",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#fff",
-            fontSize: 124,
-            fontWeight: 900,
-          }}
-        >
-          贴
-        </div>
+        <Img
+          src={staticFile("icon.png")}
+          style={{ width: 230, height: 230, objectFit: "contain", rotate: `${Math.sin(frame / 14) * 4}deg` }}
+        />
         <div>
           <div style={{ fontSize: 150, fontWeight: 900, color: C.ink, lineHeight: 1 }}>贴贴机</div>
           <div

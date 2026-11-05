@@ -1,4 +1,4 @@
-import { AbsoluteFill, Easing, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Easing, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { C, FONT } from "../theme";
 
 const POINTS = ["本机运行，项目数据只在你电脑上", "Codex 订阅出图，或接入自定义 API", "直出透明 GIF，深色模式也干净", "一键导出微信表情规格"];
@@ -10,7 +10,10 @@ export const Outro: React.FC = () => {
     interpolate(frame, [d, d + 0.4 * fps], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.bezier(0.16, 1, 0.3, 1) });
   return (
     <AbsoluteFill style={{ background: C.primary, fontFamily: FONT, alignItems: "center", justifyContent: "center", gap: 40 }}>
-      <div style={{ fontSize: 120, fontWeight: 900, color: C.ink, opacity: on(0) }}>贴贴机 TIETIE</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 28, opacity: on(0) }}>
+        <Img src={staticFile("icon.png")} style={{ width: 150, height: 150, objectFit: "contain" }} />
+        <div style={{ fontSize: 120, fontWeight: 900, color: C.ink }}>贴贴机 TIETIE</div>
+      </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "22px 40px" }}>
         {POINTS.map((t, i) => (
           <div

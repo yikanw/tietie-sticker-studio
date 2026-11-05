@@ -4,13 +4,15 @@
 
 ## 安装与启动
 
+0. 用户只给了仓库链接时，先克隆：`git clone https://github.com/yikanw/tietie-sticker-studio.git && cd tietie-sticker-studio`
 1. 检查 Node.js ≥ 20：`node --version`
 2. 检查 Codex CLI 版本与登录：`codex --version`、`codex login status`
    - 版本低于 0.166 时提醒用户升级：`npm i -g @openai/codex@latest`（旧版看不到新模型，会报 model_not_found）
    - 没有用 ChatGPT 账号登录时，让用户自己运行 `codex login`（不要替用户输入任何凭据）
 3. 安装依赖：`npm install`
-4. 启动：`npm start`（会先构建前端），然后告诉用户打开 http://localhost:5177
+4. 启动：`npm start`（会先构建前端，服务常驻，放后台运行），然后告诉用户打开 http://localhost:5177
    - 端口被占用时可用 `PORT=5178 npm start`
+5. 告诉用户：出图默认走 Codex 订阅；想做动图，需要在页面右上角「设置 → 生图」填一个 OpenAI API Key（让用户自己填，不要代填）
 
 ## 约束
 
@@ -26,3 +28,4 @@
 - `server/api-backend.mjs`：生图 API（兼容 OpenAI Images API）；`server/api-text.mjs`：生文 API（Responses 或 Chat Completions）
 - `server/prompts.mjs`、`server/styles.json`：提示词与风格预设；`server/style-guide.json`：主体/语气/场景/热梗
 - `web/src/`：前端
+- 详细说明：`docs/install.md`（安装与配置）、`docs/guide.md`（使用说明）

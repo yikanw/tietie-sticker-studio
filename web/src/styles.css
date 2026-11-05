@@ -126,13 +126,10 @@ button.link:hover:not(:disabled) { transform: none; box-shadow: none; }
   position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 10px;
   padding: 10px 20px; background: var(--panel); border-bottom: var(--bw) solid var(--ink);
 }
-.brand { font-weight: 800; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 360px; display: inline-flex; align-items: center; gap: 8px; }
-.logo {
-  display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex-shrink: 0;
-  background: var(--brand); color: #fff; border: var(--bw) solid var(--ink); border-radius: 8px;
-  box-shadow: var(--sh-sm); font-weight: 900; font-size: 17px; transform: rotate(-6deg); transition: transform 0.12s;
-}
-.wordmark { font-weight: 900; font-size: 18px; letter-spacing: 0.02em; }
+.brand { font-weight: 800; font-size: 16px; white-space: nowrap; max-width: 360px; display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+/* 图标：图片完整放进方框里，不裁切 */
+.logo { display: block; width: 36px; height: 36px; flex-shrink: 0; object-fit: contain; transition: transform 0.12s; }
+.wordmark { font-weight: 900; font-size: 18px; letter-spacing: 0.02em; overflow: hidden; text-overflow: ellipsis; }
 .wordmark small { font-size: 11px; font-weight: 800; letter-spacing: 0.18em; margin-left: 6px; padding: 1px 6px; border: var(--bw) solid var(--ink); border-radius: 6px; background: var(--primary); color: #141210; vertical-align: 2px; }
 a.home-link { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
 a.home-link:hover .logo { transform: rotate(4deg) scale(1.05); }

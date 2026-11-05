@@ -50,7 +50,7 @@ export function ProjectView({ id, env, onSettings }: { id: string; env: Env | nu
     <div className="page">
       <header className="topbar">
         <a href="#/" className="home-link" title="返回首页">
-          <span className="logo">贴</span>
+          <img className="logo" src="/icon-192.png" alt="贴贴机" />
           <span className="muted">←</span>
         </a>
         <div className="brand">{p.name}</div>
